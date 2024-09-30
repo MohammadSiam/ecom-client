@@ -1,6 +1,8 @@
 "use client";
-import { useRouter } from "next/navigation"; // Import useRouter from Next.js
+import { addToCart } from "@/store/cartSlice";
+import { useRouter } from "next/navigation";
 import React from "react";
+import { useDispatch } from "react-redux";
 
 type Product = {
   strCategory: string;
@@ -9,7 +11,7 @@ type Product = {
   strSlug: string;
   strDescription: string | null;
   strPackSize: string;
-  decMrpPrice: string;
+  decMrpPrice: number;
   strThumbnailUrl: string;
   dteCreatedAt: Date;
   dteUpdatedAt: Date;
@@ -17,19 +19,14 @@ type Product = {
 };
 
 const ProductCard: React.FC<{ product: Product }> = ({ product }) => {
-  const router = useRouter(); // Initialize the router
-
-  // Function to handle navigation
-  const handleNavigate = () => {
-    router.push(`${product.strSlug}`);
-  };
-
+  const dispatch = useDispatch();
+  const router = useRouter();
   return (
     <div className="bg-white shadow-md rounded-lg p-4 hover:shadow-lg transition-shadow">
       <img
         src={product.strThumbnailUrl}
-        alt={`Image of ${product.strProductName}`} // Improved alt text
-        className="w-full h-48 object-cover rounded-md"
+        alt={`Image of ${product.strProductName}`}
+        className="w-full h-48 object-contain h-48 w-96 rounded-md"
       />
       <div className="mt-4">
         <h2 className="text-xl font-semibold text-gray-800">
@@ -42,13 +39,15 @@ const ProductCard: React.FC<{ product: Product }> = ({ product }) => {
       </div>
       <div className="mt-4 flex justify-between items-center">
         <button
-          type="button"
-          className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600"
+          onClick={() =>
+            dispatch(addToCart({ id: product.strUuid, name: product.strProductName, quantity: 1, price: product.decMrpPrice }))
+          }
+          className="text-blue-500"
         >
-          Buy Now
+          Add to Cart
         </button>
         <button
-          onClick={handleNavigate} // Call the navigate function on click
+          onClick={() => router.push(`/single-product/${product.strSlug}`)}
           className="text-blue-500 hover:underline"
         >
           View Details

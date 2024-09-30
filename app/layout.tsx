@@ -1,7 +1,11 @@
+'use client'
 import NavBar from "@/components/Navbar";
 import type { Metadata } from "next";
 import localFont from "next/font/local";
 import "./globals.css";
+import { Provider } from "react-redux";
+import store from "@/store/store";
+import PageMetadata from "@/components/PageMetaData";
 
 const geistSans = localFont({
   src: "./fonts/GeistVF.woff",
@@ -14,11 +18,6 @@ const geistMono = localFont({
   weight: "100 900",
 });
 
-export const metadata: Metadata = {
-  title: "Dotpot IT",
-  description: "Task Project",
-};
-
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -29,8 +28,11 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        <NavBar />
-        {children}
+        <Provider store={store}>
+          <PageMetadata />
+          <NavBar />
+          {children}
+        </Provider>
       </body>
     </html>
   );

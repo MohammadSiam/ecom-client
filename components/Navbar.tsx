@@ -1,9 +1,17 @@
-"use client";
+// components/NavBar.tsx
+import { useDispatch, useSelector } from "react-redux";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { RootState } from "@/store/store";
+import { removeFromCart } from "@/store/cartSlice";
+import { FaShoppingCart } from "react-icons/fa";
+import Modal from "./Modal"; // Import the Modal component
 
 const NavBar: React.FC = () => {
-  const [isOpen, setIsOpen] = useState(false);
+  const [isCartOpen, setIsCartOpen] = useState(false);
+  const cartItems = useSelector((state: RootState) => state.cart.items);
+  const totalQuantity = useSelector((state: RootState) => state.cart.totalQuantity);
+  const dispatch = useDispatch();
   const router = useRouter();
 
   const handleLogout = () => {
@@ -23,13 +31,20 @@ const NavBar: React.FC = () => {
                 Home
               </button>
             </div>
-            <div>
-              <button
-                onClick={() => router.push("/product")}
-                className="text-white font-bold"
-              >
-                Products
-              </button>
+            <div className="flex">
+              <div className="relative">
+                <button
+                  onClick={() => setIsCartOpen(true)}
+                  className="text-white font-bold px-4 relative flex items-center"
+                >
+                  <FaShoppingCart className="mr-2" />
+                  {totalQuantity > 0 && (
+                    <span className="absolute top-0 right-0 bg-red-500 text-white rounded-full h-5 w-5 flex items-center justify-center text-xs">
+                      {totalQuantity}
+                    </span>
+                  )}
+                </button>
+              </div>
               <button
                 onClick={() => router.push("/login")}
                 className="text-white font-bold px-4"
@@ -40,12 +55,25 @@ const NavBar: React.FC = () => {
           </div>
         </div>
       </div>
-      {/* Mobile menu */}
-      {isOpen && (
-        <div className="md:hidden">
-          <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3"></div>
-        </div>
-      )}
+
+      {/* Cart Modal */}
+      <Modal isOpen={isCartOpen} onClose={() => setIsCartOpen(false)}>
+        {cartItems.length > 0 ? (
+          cartItems.map((item) => (
+            <div key={item.id} className="flex justify-between items-center mb-2">
+              <span>{item.name} (x{item.quantity})</span>
+              <button
+                onClick={() => dispatch(removeFromCart(item.id))}
+                className="text-red-500"
+              >
+                Remove
+              </button>
+            </div>
+          ))
+        ) : (
+          <div>No items in cart</div>
+        )}
+      </Modal>
     </nav>
   );
 };

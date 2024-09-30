@@ -29,7 +29,7 @@ const ProductList: React.FC<ProductListProps> = ({ categoryName }) => {
     const fetchProducts = async () => {
       try {
         const response = await fetch(
-          `${process.env.NEXT_PUBLIC_API_BASE_URL}/product/category/Snacks`,
+          `${process.env.NEXT_PUBLIC_API_BASE_URL}/product/category/${categoryName}`,
           {
             method: "GET",
           }
@@ -38,7 +38,7 @@ const ProductList: React.FC<ProductListProps> = ({ categoryName }) => {
           throw new Error("Failed to fetch products");
         }
         const data = await response.json();
-        setProducts(data); // Assuming the API returns an array of products
+        setProducts(data);
       } catch (err: any) {
         setError(err.message);
       } finally {
@@ -50,17 +50,29 @@ const ProductList: React.FC<ProductListProps> = ({ categoryName }) => {
   }, [categoryName]);
 
   if (loading) {
-    return <div>Loading products...</div>;
+    return (
+      <div className="container mx-auto py-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-6">
+          {Array(6)
+            .fill(0)
+            .map((_, index) => (
+              <div
+                key={index}
+                className="w-full h-48 bg-gray-200 rounded-md animate-pulse"
+              ></div>
+            ))}
+        </div>
+      </div>
+    );
   }
 
   if (error) {
-    return <div>Error: {error}</div>;
+    return (<div>Error: {error}</div>);
   }
 
   return (
     <div className="container mx-auto py-8">
-      <h1 className="text-2xl font-bold text-center mb-8">Product Listing</h1>
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-6">
         {products.map((product) => (
           <ProductCard key={product.strUuid} product={product} />
         ))}
