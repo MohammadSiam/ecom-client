@@ -9,7 +9,7 @@ interface Product {
   strSlug: string;
   strDescription: string | null;
   strPackSize: string;
-  decMrpPrice: string;
+  decMrpPrice: number;
   strThumbnailUrl: string;
   dteCreatedAt: Date;
   dteUpdatedAt: Date;

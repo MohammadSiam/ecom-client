@@ -19,7 +19,7 @@ const NavBar: React.FC = () => {
   };
 
   return (
-    <nav className="bg-gray-800 py-4">
+    <nav className="fixed top-0 left-0 w-full bg-gray-800 text-white shadow-md">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           <div className="flex items-center w-full justify-between">
@@ -31,11 +31,19 @@ const NavBar: React.FC = () => {
                 Home
               </button>
             </div>
-            <div className="flex">
+            <div className="flex items-center">
+              <div>
+                <button
+                  onClick={() => router.push("/login")}
+                  className="text-white font-bold px-4"
+                >
+                  Login
+                </button>
+              </div>
               <div className="relative">
                 <button
                   onClick={() => setIsCartOpen(true)}
-                  className="text-white font-bold px-4 relative flex items-center"
+                  className="text-white font-bold px-4 relative flex items-center h-[40px]"
                 >
                   <FaShoppingCart className="mr-2" />
                   {totalQuantity > 0 && (
@@ -45,12 +53,7 @@ const NavBar: React.FC = () => {
                   )}
                 </button>
               </div>
-              <button
-                onClick={() => router.push("/login")}
-                className="text-white font-bold px-4"
-              >
-                Login
-              </button>
+
             </div>
           </div>
         </div>
