@@ -17,10 +17,9 @@ const NavBar: React.FC = () => {
   const dispatch = useDispatch();
   const router = useRouter();
   const { data: session } = useSession();
-  console.log(session?.user, "user");
 
   const handleLogout = async () => {
-    signOut();
+    await signOut();
   };
 
   return (
