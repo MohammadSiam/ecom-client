@@ -1,21 +1,26 @@
-// components/NavBar.tsx
-import { useDispatch, useSelector } from "react-redux";
+"use client";
+import { removeFromCart } from "@/store/cartSlice";
+import { RootState } from "@/store/store";
+import { signOut, useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { RootState } from "@/store/store";
-import { removeFromCart } from "@/store/cartSlice";
 import { FaShoppingCart } from "react-icons/fa";
-import Modal from "./Modal"; // Import the Modal component
+import { useDispatch, useSelector } from "react-redux";
+import Modal from "./Modal";
 
 const NavBar: React.FC = () => {
   const [isCartOpen, setIsCartOpen] = useState(false);
   const cartItems = useSelector((state: RootState) => state.cart.items);
-  const totalQuantity = useSelector((state: RootState) => state.cart.totalQuantity);
+  const totalQuantity = useSelector(
+    (state: RootState) => state.cart.totalQuantity
+  );
   const dispatch = useDispatch();
   const router = useRouter();
+  const { data: session } = useSession();
+  console.log(session?.user, "user");
 
-  const handleLogout = () => {
-    // Implement your logout logic here
+  const handleLogout = async () => {
+    signOut();
   };
 
   return (
@@ -33,12 +38,21 @@ const NavBar: React.FC = () => {
             </div>
             <div className="flex items-center">
               <div>
-                <button
-                  onClick={() => router.push("/login")}
-                  className="text-white font-bold px-4"
-                >
-                  Login
-                </button>
+                {!session ? (
+                  <button
+                    onClick={() => router.push("/login")}
+                    className="text-white font-bold px-4"
+                  >
+                    Login
+                  </button>
+                ) : (
+                  <button
+                    onClick={handleLogout}
+                    className="text-white font-bold px-4"
+                  >
+                    Logout
+                  </button>
+                )}
               </div>
               <div className="relative">
                 <button
@@ -53,7 +67,6 @@ const NavBar: React.FC = () => {
                   )}
                 </button>
               </div>
-
             </div>
           </div>
         </div>
@@ -62,9 +75,14 @@ const NavBar: React.FC = () => {
       {/* Cart Modal */}
       <Modal isOpen={isCartOpen} onClose={() => setIsCartOpen(false)}>
         {cartItems.length > 0 ? (
-          cartItems.map((item) => (
-            <div key={item.id} className="flex justify-between items-center mb-2">
-              <span>{item.name} (x{item.quantity})</span>
+          cartItems.map((item: any) => (
+            <div
+              key={item.id}
+              className="flex justify-between items-center mb-2"
+            >
+              <span className="text-black">
+                {item.name} (x{item.quantity})
+              </span>
               <button
                 onClick={() => dispatch(removeFromCart(item.id))}
                 className="text-red-500"
@@ -74,7 +92,7 @@ const NavBar: React.FC = () => {
             </div>
           ))
         ) : (
-          <div>No items in cart</div>
+          <div className="text-black">No items in cart</div>
         )}
       </Modal>
     </nav>

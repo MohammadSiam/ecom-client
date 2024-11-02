@@ -1,11 +1,11 @@
-'use client'
+"use client";
 import NavBar from "@/components/Navbar";
-import type { Metadata } from "next";
-import localFont from "next/font/local";
-import "./globals.css";
-import { Provider } from "react-redux";
-import store from "@/store/store";
 import PageMetadata from "@/components/PageMetaData";
+import Providers from "@/components/Providers";
+import store from "@/store/store";
+import localFont from "next/font/local";
+import { Provider } from "react-redux";
+import "./globals.css";
 
 const geistSans = localFont({
   src: "./fonts/GeistVF.woff",
@@ -29,9 +29,11 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
         <Provider store={store}>
-          <PageMetadata />
-          <NavBar />
-          {children}
+          <Providers>
+            <PageMetadata />
+            <NavBar />
+            {children}
+          </Providers>
         </Provider>
       </body>
     </html>

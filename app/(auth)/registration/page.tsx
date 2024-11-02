@@ -1,39 +1,42 @@
 "use client";
 import axios from "axios";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useRef, useState } from "react";
 
 const RegistrationPage: React.FC = () => {
   const router = useRouter();
-  const [formData, setFormData] = useState({
-    username: "",
-    email: "",
-    phone: "",
-    department: "",
-    password: "",
-    image: null as File | null,
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const [data, setData] = useState({
+    strUserName: "",
+    strEmail: "",
+    strPhone: "",
+    strPassword: "",
+    strImageURL: null as File | null,
   });
-  const [errors, setErrors] = useState({
-    username: "",
-    email: "",
-    phone: "",
-    department: "",
-    password: "",
-    form: "",
-  });
+
+  const [errors, setErrors] = useState<{
+    strUserName?: string;
+    strEmail?: string;
+    strPhone?: string;
+    strPassword?: string;
+    form?: string;
+  }>({});
   const [showPassword, setShowPassword] = useState(false);
   const [previewImage, setPreviewImage] = useState<string | null>(null);
-  const [isDisabled, setisDisabled] = useState(false);
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const fileInput = e.target;
-    const file = fileInput.files?.[0];
+    const file = e.target.files?.[0];
     if (file) {
-      setFormData({
-        ...formData,
-        image: file,
-      });
+      setData({ ...data, strImageURL: file });
       setPreviewImage(URL.createObjectURL(file));
+    }
+  };
+
+  const handleClearImage = () => {
+    setData((prev) => ({ ...prev, strImageURL: null }));
+    setPreviewImage(null);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = ""; // Clear the file input
     }
   };
 
@@ -41,92 +44,67 @@ const RegistrationPage: React.FC = () => {
     setShowPassword(!showPassword);
   };
 
-  const validatePassword = (password: string) => {
-    const passwordRegex = /^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{8,}$/;
-    return passwordRegex.test(password);
-  };
+  const validateFields = () => {
+    const newErrors: Record<string, string> = {};
 
-  const validateEmail = (email: string) => {
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    return emailRegex.test(email);
-  };
+    if (data.strPassword.length < 8 || !/\d/.test(data.strPassword)) {
+      newErrors.strPassword =
+        "Password must be at least 8 characters long and contain a number.";
+    }
 
-  const validatePhoneNumber = (phoneNumber: string) => {
-    const phoneRegex = /^\d{11}$/;
-    return phoneRegex.test(phoneNumber);
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(data.strEmail)) {
+      newErrors.strEmail = "Invalid email address.";
+    }
+
+    if (!/^\d{11}$/.test(data.strPhone)) {
+      newErrors.strPhone = "Phone number must be exactly 11 digits.";
+    }
+
+    return newErrors;
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-    setFormData({
-      ...formData,
-      [name]: value,
-    });
-
-    // Reset individual field error when user modifies the input
-    setErrors({ ...errors, [name]: "", form: "" });
+    setData((prev) => ({ ...prev, [name]: value }));
+    setErrors((prev) => ({ ...prev, [name]: "" }));
   };
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    setisDisabled(true);
-    let hasError = false;
-    const newErrors = { ...errors };
 
-    if (!validatePassword(formData.password)) {
-      newErrors.password =
-        "Password must be at least 8 characters long and contain at least 1 letter and 1 number";
-      hasError = true;
-    }
-
-    if (!validateEmail(formData.email)) {
-      newErrors.email = "Invalid email address";
-      hasError = true;
-    }
-
-    if (!validatePhoneNumber(formData.phone)) {
-      newErrors.phone = "Invalid phone number";
-      hasError = true;
-    }
-
-    if (hasError) {
-      setErrors(newErrors);
+    // Validate fields
+    const validationErrors = validateFields();
+    if (Object.keys(validationErrors).length > 0) {
+      setErrors(validationErrors);
       return;
     }
 
     try {
-      // const jsonData = JSON.stringify(formData);
+      // const jsonData = JSON.stringify(data);
 
-      const formDataToSend = new FormData();
-      formDataToSend.append(
-        "data",
-        JSON.stringify({
-          username: formData.username,
-          email: formData.email,
-          password: formData.password,
-          phone: formData.phone,
-          department: formData.department,
-        })
-      );
-      if (formData.image) {
-        formDataToSend.append("image", formData.image);
+      // console.log("fromdata", jsonData);
+
+      const formData: any = new FormData();
+      formData.append("strUserName", data.strUserName);
+      formData.append("strEmail", data.strEmail);
+      formData.append("strPhone", data.strPhone);
+      formData.append("strPassword", data.strPassword);
+      if (data.strImageURL) {
+        formData.append("strImageURL", data.strImageURL);
       }
-
       const response = await axios.post(
-        "https://ts-express-production.up.railway.app/api/register",
-        formDataToSend,
+        `${process.env.NEXT_PUBLIC_API_BASE_URL}/auth/register`,
+        formData,
         {
           headers: {
             "Content-Type": "multipart/form-data",
           },
         }
       );
-      console.log(response);
-
       if (response.data.message) {
         setErrors({ ...errors, form: response.data.message });
       } else {
-        router.push("/Login");
+        router.push("/login");
       }
     } catch (error: any) {
       if (
@@ -157,14 +135,16 @@ const RegistrationPage: React.FC = () => {
                 </label>
                 <input
                   type="text"
-                  id="username"
-                  name="username"
-                  value={formData.username}
+                  id="strUserName"
+                  name="strUserName"
+                  value={data.strUserName}
                   onChange={handleChange}
                   className="border-gray-300 border w-full rounded-md px-3 py-2"
                 />
-                {errors.username && (
-                  <p className="text-red-500 text-xs mt-1">{errors.username}</p>
+                {errors.strUserName && (
+                  <p className="text-red-500 text-xs mt-1">
+                    {errors.strUserName}
+                  </p>
                 )}
               </div>
 
@@ -177,14 +157,14 @@ const RegistrationPage: React.FC = () => {
                 </label>
                 <input
                   type="email"
-                  id="email"
-                  name="email"
-                  value={formData.email}
+                  id="strEmail"
+                  name="strEmail"
+                  value={data.strEmail}
                   onChange={handleChange}
                   className="border-gray-300 border w-full rounded-md px-3 py-2"
                 />
-                {errors.email && (
-                  <p className="text-red-500 text-xs mt-1">{errors.email}</p>
+                {errors.strEmail && (
+                  <p className="text-red-500 text-xs mt-1">{errors.strEmail}</p>
                 )}
               </div>
 
@@ -198,13 +178,13 @@ const RegistrationPage: React.FC = () => {
                 <div className="relative">
                   <input
                     type={showPassword ? "text" : "password"}
-                    id="password"
-                    name="password"
-                    value={formData.password}
+                    id="strPassword"
+                    name="strPassword"
+                    value={data.strPassword}
                     onChange={handleChange}
                     className="border-gray-300 border w-full rounded-md px-3 py-2"
                   />
-                  {formData.password && (
+                  {data.strPassword && (
                     <button
                       type="button"
                       className="absolute inset-y-0 right-0 px-4 py-2"
@@ -214,8 +194,10 @@ const RegistrationPage: React.FC = () => {
                     </button>
                   )}
                 </div>
-                {errors.password && (
-                  <p className="text-red-500 text-xs mt-1">{errors.password}</p>
+                {errors.strPassword && (
+                  <p className="text-red-500 text-xs mt-1">
+                    {errors.strPassword}
+                  </p>
                 )}
               </div>
 
@@ -228,32 +210,15 @@ const RegistrationPage: React.FC = () => {
                 </label>
                 <input
                   type="phone"
-                  id="phone"
-                  name="phone"
-                  value={formData.phone}
+                  id="strPhone"
+                  name="strPhone"
+                  value={data.strPhone}
                   onChange={handleChange}
                   className="border-gray-300 border w-full rounded-md px-3 py-2"
                 />
-                {errors.phone && (
-                  <p className="text-red-500 text-xs mt-1">{errors.phone}</p>
+                {errors.strPhone && (
+                  <p className="text-red-500 text-xs mt-1">{errors.strPhone}</p>
                 )}
-              </div>
-
-              <div className="col-span-2 mb-4">
-                <label
-                  htmlFor="department"
-                  className="block text-gray-700 font-semibold mb-2"
-                >
-                  Department
-                </label>
-                <input
-                  type="department"
-                  id="department"
-                  name="department"
-                  value={formData.department}
-                  onChange={handleChange}
-                  className="border-gray-300 border w-full rounded-md px-3 py-2"
-                />
               </div>
               <div className="col-span-2 mb-4">
                 <label
@@ -264,20 +229,28 @@ const RegistrationPage: React.FC = () => {
                 </label>
                 <input
                   type="file"
-                  id="image"
-                  name="image"
+                  id="strImageURL"
+                  name="strImageURL"
                   accept="image/*"
                   onChange={handleImageChange}
+                  ref={fileInputRef}
                   className="border-gray-300 border w-full rounded-md px-3 py-2"
                 />
               </div>
               {previewImage && (
-                <div className="col-span-2 mb-4">
+                <div className="col-span-2 mb-4 relative">
                   <img
                     src={previewImage}
                     alt="Preview"
                     className="rounded-md w-full"
                   />
+                  <button
+                    type="button"
+                    onClick={handleClearImage}
+                    className="absolute top-2 right-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600"
+                  >
+                    ✕
+                  </button>
                 </div>
               )}
             </div>
@@ -287,7 +260,6 @@ const RegistrationPage: React.FC = () => {
             <button
               type="submit"
               className="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded-md"
-              disabled={isDisabled}
             >
               Register
             </button>

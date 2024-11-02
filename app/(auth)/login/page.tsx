@@ -1,14 +1,17 @@
 // pages/LoginPage.tsx
 "use client";
 
+import { postMethod } from "@/utils/api/postMethod";
+import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
 const LoginPage: React.FC = () => {
+  const [loading, setLoading] = useState(false);
   const router = useRouter();
   const [formData, setFormData] = useState({
-    email: "",
-    password: "",
+    strEmailOrPhone: "",
+    strPassword: "",
   });
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
@@ -26,7 +29,33 @@ const LoginPage: React.FC = () => {
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    console.log(formData);
+    try {
+      setLoading(true);
+      const response = await postMethod({
+        route: `${process.env.NEXT_PUBLIC_API_BASE_URL}/auth/login`,
+        postData: formData,
+      });
+      if (response?.data) {
+        const data = await signIn("credentials", {
+          email: formData.strEmailOrPhone,
+          name: response?.data?.data?.name,
+          accessToken: response?.data?.data?.accessToken,
+          phone: response?.data?.data?.phone,
+          refreshToken: response?.data?.data?.refreshToken,
+          access_token_expiresIn: response?.data?.data?.access_token_expiresIn,
+          refresh_token_expiresIn:
+            response?.data?.data?.refresh_token_expiresIn,
+          redirect: false,
+        });
+        if (data?.ok) {
+          router.push("/");
+        }
+      }
+    } catch (error) {
+      setError("Failed to login. Please check your credentials.");
+    } finally {
+      setLoading(false);
+    }
   };
   return (
     <div>
@@ -44,8 +73,8 @@ const LoginPage: React.FC = () => {
               <input
                 type="text"
                 id="email"
-                name="email"
-                value={formData.email}
+                name="strEmailOrPhone"
+                value={formData.strEmailOrPhone}
                 onChange={handleChange}
                 className="border-gray-300 border w-full rounded-md px-3 py-2 text-black"
               />
@@ -62,12 +91,12 @@ const LoginPage: React.FC = () => {
                 <input
                   type={showPassword ? "text" : "password"}
                   id="password"
-                  name="password"
-                  value={formData.password}
+                  name="strPassword"
+                  value={formData.strPassword}
                   onChange={handleChange}
                   className="border-gray-300 border w-full rounded-md px-3 py-2 text-black"
                 />
-                {formData.password && (
+                {formData.strPassword && (
                   <button
                     type="button"
                     className="absolute inset-y-0 right-0 px-4 py-2 text-black"
@@ -83,7 +112,30 @@ const LoginPage: React.FC = () => {
               type="submit"
               className="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded-md"
             >
-              Login
+              {loading ? (
+                <svg
+                  className="animate-spin h-5 w-5 text-white mr-2"
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                >
+                  <circle
+                    className="opacity-25"
+                    cx="12"
+                    cy="12"
+                    r="10"
+                    stroke="currentColor"
+                    strokeWidth="4"
+                  ></circle>
+                  <path
+                    className="opacity-75"
+                    fill="currentColor"
+                    d="M4 12a8 8 0 018-8v8H4z"
+                  ></path>
+                </svg>
+              ) : (
+                "Login"
+              )}
             </button>
           </form>
           <p className="mt-4 text-gray-600 text-sm">
